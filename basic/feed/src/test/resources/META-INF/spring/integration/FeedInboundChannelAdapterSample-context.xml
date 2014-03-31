@@ -6,14 +6,33 @@
 			http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
 			http://www.springframework.org/schema/integration/feed http://www.springframework.org/schema/integration/feed/spring-integration-feed.xsd">
 	
-	<int-feed:inbound-channel-adapter id="feedAdapter" 
+	<int-feed:inbound-channel-adapter id="skyFeedAdapter" 
 						channel="feedChannel" 
 						auto-startup="true" 
-						url="http://rss.cnn.com/rss/cnn_topstories.rss">
-		<int:poller fixed-rate="10000" max-messages-per-poll="100" />
+						url="http://www.skysports.com/rss/0,20514,11095,00.xml">
+		<int:poller fixed-rate="10000" max-messages-per-poll="50" />
+	</int-feed:inbound-channel-adapter>
+	
+	<int-feed:inbound-channel-adapter id="bbcFeedAdapter" 
+						channel="feedChannel" 
+						auto-startup="true"
+						url="http://feeds.bbci.co.uk/sport/0/football/rss.xml?edition=int">
+		<int:poller fixed-rate="10000" max-messages-per-poll="50" />
 	</int-feed:inbound-channel-adapter>
 	
 	<int:channel id="feedChannel">
-		<int:queue/>
 	</int:channel>
+	
+	<!-- 
+	<int:channel id="sortedChannel">
+		<int:priority-queue capacity="100" comparator="feedComparator"/>
+	</int:channel>
+	
+	<int:bridge input-channel="feedChannel" output-channel="sortedChannel">
+    	<int:poller fixed-rate="100" />
+	</int:bridge>
+	
+	 -->
+	
+	<bean id="feedComparator" class="org.springframework.integration.samples.feed.FeedComparator" />
 </beans>
