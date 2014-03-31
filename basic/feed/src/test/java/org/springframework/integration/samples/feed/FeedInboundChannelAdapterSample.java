@@ -15,13 +15,11 @@
  */
 package org.springframework.integration.samples.feed;
 
-import org.junit.Test;
+import java.util.List;
 
+import org.junit.Test;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-import org.springframework.integration.Message;
-import org.springframework.integration.channel.PriorityChannel;
-import org.springframework.integration.core.PollableChannel;
 
 import com.sun.syndication.feed.synd.SyndEntry;
 
@@ -31,29 +29,17 @@ import com.sun.syndication.feed.synd.SyndEntry;
  */
 public class FeedInboundChannelAdapterSample {
 
-	@SuppressWarnings("unchecked") 
 	@Test
 	public void runDemo() throws InterruptedException{
 		ApplicationContext ac = 
 			new ClassPathXmlApplicationContext("META-INF/spring/integration/FeedInboundChannelAdapterSample-context.xml");
-		PriorityChannel feedChannel = ac.getBean("sortedChannel", PriorityChannel.class);
+		FeedCollector feedCollector = ac.getBean("feedCollector", FeedCollector.class);
 		Thread.sleep(10000);
-		System.out.println("Call 1 --------------");
-		for(int i=0; i < 20; i++) {
-			Message<SyndEntry> message = (Message<SyndEntry>) feedChannel.receive(1000);
-			if (message != null){
-				SyndEntry entry = message.getPayload();
-				System.out.println(entry.getPublishedDate() + " - " + entry.getTitle() + ":"+entry.getLink());
-			}
+		List<SyndEntry> result =  feedCollector.get(0, 500);
+		
+		for(SyndEntry entry : result){
+			System.out.println(entry.getPublishedDate() + " - " + entry.getTitle() + ":"+entry.getLink());
 		}
 		
-		System.out.println("Call 2 --------------");
-		for(int i=0; i < 20; i++) {
-			Message<SyndEntry> message = (Message<SyndEntry>) feedChannel.receive(1000);
-			if (message != null){
-				SyndEntry entry = message.getPayload();
-				System.out.println(entry.getPublishedDate() + " - " + entry.getTitle() + ":"+entry.getLink());
-			}
-		}
 	}
 }

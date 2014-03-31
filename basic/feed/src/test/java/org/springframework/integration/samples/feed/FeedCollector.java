@@ -1,6 +1,7 @@
 package org.springframework.integration.samples.feed;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.PriorityQueue;
 import java.util.concurrent.ConcurrentSkipListSet;
 
@@ -8,24 +9,18 @@ import com.sun.syndication.feed.synd.SyndEntry;
 
 public class FeedCollector {
 	
-	private ConcurrentSkipListSet<SyndEntry> queue;
-	private Integer capacity;
-	private int size;
-	
-	private SyndEntry min;
-	private SyndEntry max;
+	private FixedSizePriorityQueue<SyndEntry> queue;
 	
 	public FeedCollector(int capacity, Comparator<SyndEntry> comparator){
-		queue = new ConcurrentSkipListSet<SyndEntry>(comparator);
-		this.capacity = capacity;
+		queue = new FixedSizePriorityQueue<SyndEntry>(capacity, comparator);
 	}
 	
 	public void receiveFeed(SyndEntry feed){
-		synchronized(capacity){
-			if(capacity == size){
-				queue.remove(min);
-			}
-		}
+		queue.add(feed);
+	}
+	
+	public List<SyndEntry> get(Integer offset, Integer limit){
+		return queue.peekFirst(limit);
 	}
 
 }

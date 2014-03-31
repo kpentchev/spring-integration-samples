@@ -23,6 +23,19 @@
 	<int:channel id="feedChannel">
 	</int:channel>
 	
+	<bean id="feedComparator" class="org.springframework.integration.samples.feed.FeedComparator" />
+	
+	<bean id="feedCollector" class="org.springframework.integration.samples.feed.FeedCollector">
+		<constructor-arg>
+			<value>200</value>
+		</constructor-arg>
+		<constructor-arg>
+			<ref bean="feedComparator"/>
+		</constructor-arg>
+	</bean>
+	
+	<int:service-activator input-channel="feedChannel" ref="feedCollector" method="receiveFeed"/>
+	
 	<!-- 
 	<int:channel id="sortedChannel">
 		<int:priority-queue capacity="100" comparator="feedComparator"/>
@@ -34,5 +47,5 @@
 	
 	 -->
 	
-	<bean id="feedComparator" class="org.springframework.integration.samples.feed.FeedComparator" />
+	
 </beans>

@@ -1,9 +1,11 @@
 package org.springframework.integration.samples.feed;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 
 public class FixedSizePriorityQueue<E> implements Serializable, BoundedQueue<E> {
 
@@ -65,22 +67,37 @@ public class FixedSizePriorityQueue<E> implements Serializable, BoundedQueue<E> 
 	/**
 	 * Internal method to insert into a subtree.
 	 * 
-	 * @param x
+	 * @param element
 	 *            the item to insert.
 	 * @param currentNode
 	 *            the node that roots the subtree.
 	 * @return the new root of the subtree.
 	 */
-	private AvlNode<E> insert(E x, AvlNode<E> currentNode) {
-		if (currentNode == null)
-			return new AvlNode<E>(x, null, null);
+	private AvlNode<E> insert(E element, AvlNode<E> currentNode, AvlNode<E> parent) {
+		if (currentNode == null){
+			AvlNode<E> newNode = new AvlNode<E>(element, parent);
+			//update min and max
+			if(parent != null){
+				if(parent.equals(this.max) && comparator.compare(this.max.element, element) < 0){
+					this.max = newNode;
+				}
+				if(parent.equals(this.min) && comparator.compare(this.min.element, element) > 0){
+					this.min = newNode;
+				}
+			}
+			else {
+				this.max = newNode;
+				this.min = newNode;
+			}
+			return newNode;
+		}
 
-		int compareResult = this.comparator.compare(x, currentNode.element);
+		int compareResult = this.comparator.compare(element, currentNode.element);
 
 		if (compareResult < 0)
-			currentNode.left = insert(x, currentNode.left);
+			currentNode.left = insert(element, currentNode.left, currentNode);
 		else if (compareResult > 0)
-			currentNode.right = insert(x, currentNode.right);
+			currentNode.right = insert(element, currentNode.right, currentNode);
 		else
 			; // Duplicate; do nothing
 		return balance(currentNode);
@@ -181,13 +198,13 @@ public class FixedSizePriorityQueue<E> implements Serializable, BoundedQueue<E> 
 		if (t != null) {
 			StringBuilder sb = new StringBuilder();
 			sb.append(printTree(t.left));
-			sb.append("->");
+			//sb.append("->");
 			sb.append(t.element);
-			sb.append("<-");
+			//sb.append("<-");
 			sb.append(printTree(t.right));
 			return sb.toString();
 		}
-		return "{}";
+		return "";
 	}
 
 	/**
@@ -195,6 +212,12 @@ public class FixedSizePriorityQueue<E> implements Serializable, BoundedQueue<E> 
 	 */
 	private int height(AvlNode<E> t) {
 		return t == null ? -1 : t.height;
+	}
+	
+	private void parent(AvlNode<E> currentNode, AvlNode<E> parent){
+		if(currentNode != null){
+			currentNode.parent = parent;
+		}
 	}
 
 	/**
@@ -204,7 +227,9 @@ public class FixedSizePriorityQueue<E> implements Serializable, BoundedQueue<E> 
 	private AvlNode<E> rotateWithLeftChild(AvlNode<E> k2) {
 		AvlNode<E> k1 = k2.left;
 		k2.left = k1.right;
+		parent(k2.left, k2);
 		k1.right = k2;
+		parent(k1.right, k1);
 		k2.height = Math.max(height(k2.left), height(k2.right)) + 1;
 		k1.height = Math.max(height(k1.left), k2.height) + 1;
 		return k1;
@@ -217,7 +242,9 @@ public class FixedSizePriorityQueue<E> implements Serializable, BoundedQueue<E> 
 	private AvlNode<E> rotateWithRightChild(AvlNode<E> k1) {
 		AvlNode<E> k2 = k1.right;
 		k1.right = k2.left;
+		parent(k1.right, k1);
 		k2.left = k1;
+		parent(k2.left, k2);
 		k1.height = Math.max(height(k1.left), height(k1.right)) + 1;
 		k2.height = Math.max(height(k2.right), k1.height) + 1;
 		return k2;
@@ -230,6 +257,7 @@ public class FixedSizePriorityQueue<E> implements Serializable, BoundedQueue<E> 
 	 */
 	private AvlNode<E> doubleWithLeftChild(AvlNode<E> k3) {
 		k3.left = rotateWithRightChild(k3.left);
+		parent(k3.left, k3);
 		return rotateWithLeftChild(k3);
 	}
 
@@ -240,21 +268,35 @@ public class FixedSizePriorityQueue<E> implements Serializable, BoundedQueue<E> 
 	 */
 	private AvlNode<E> doubleWithRightChild(AvlNode<E> k1) {
 		k1.right = rotateWithLeftChild(k1.right);
+		parent(k1.right, k1);
 		return rotateWithRightChild(k1);
 	}
 
 	private static class AvlNode<AnyType> {
 		// Constructors
-		AvlNode(AnyType theElement, AvlNode<AnyType> lt, AvlNode<AnyType> rt) {
+		
+		AvlNode(AnyType theElement, AvlNode<AnyType> parent){
+			this(theElement, null, null, parent);
+		}
+		
+		
+		AvlNode(AnyType theElement, AvlNode<AnyType> lt, AvlNode<AnyType> rt, AvlNode<AnyType> theParent) {
 			element = theElement;
 			left = lt;
 			right = rt;
 			height = 0;
+			parent = theParent;
+			
 		}
+		
+		public String toString() {
+			return element.toString();
+		};
 
 		AnyType element; // The data in the node
 		AvlNode<AnyType> left; // Left child
 		AvlNode<AnyType> right; // Right child
+		AvlNode<AnyType> parent;
 		int height; // Height
 	}
 
@@ -290,12 +332,14 @@ public class FixedSizePriorityQueue<E> implements Serializable, BoundedQueue<E> 
 				return false;
 			} else {
 				root = remove(this.min.element, root);
-				root = insert(e, root);
+				root = insert(e, root, null);
+				root.parent = null;
 				return true;
 			}
 
 		} else {
-			root = insert(e, root);
+			root = insert(e, root, null);
+			root.parent = null;
 			size++;
 			return true;
 		}
@@ -351,16 +395,50 @@ public class FixedSizePriorityQueue<E> implements Serializable, BoundedQueue<E> 
 	}
 
 	@Override
-	public E poll() {
+	public E pollFirst() {
 		AvlNode<E> result = this.max;
-		remove(result.element, root);
-		this.max = findMax(root);
+		this.max.parent.right = this.max.left;
+		this.max = this.max.parent;
+		balance(this.max);
+		return result.element;
+	}
+	
+	@Override
+	public E pollLast() {
+		AvlNode<E> result = this.min;
+		this.min.parent.left = this.min.right;
+		this.min = this.min.parent;
+		balance(this.min);
 		return result.element;
 	}
 	
 	@Override
 	public String toString() {
 		return printTree(root);
+	}
+
+	@Override
+	public List<E> peekFirst(int limit) {
+		List<E> collection = new ArrayList<E>(limit);
+		reverseInOrderCollect(collection, root, limit);
+		return collection;
+	}
+
+	@Override
+	public List<E> peekLast(int offset) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	private void reverseInOrderCollect(List<E> collection, AvlNode<E> currentNode, int capacity){
+		if(currentNode == null){
+			return;
+		}
+		reverseInOrderCollect(collection, currentNode.right, capacity);
+		if(capacity > collection.size()){
+			collection.add(currentNode.element);
+		}
+		reverseInOrderCollect(collection, currentNode.left, capacity);
 	}
 
 }

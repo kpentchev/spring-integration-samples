@@ -1,6 +1,7 @@
 package org.springframework.integration.samples.feed;
 
 import java.util.Collection;
+import java.util.List;
 
 public interface BoundedQueue<E> extends Collection<E>{
 
@@ -8,6 +9,12 @@ public interface BoundedQueue<E> extends Collection<E>{
 	
 	E peekLast();
 	
-	E poll();
+	E pollFirst();
+	
+	E pollLast();
+	
+	List<E> peekFirst(int offset);
+	
+	List<E> peekLast(int offset);
 	
 }
