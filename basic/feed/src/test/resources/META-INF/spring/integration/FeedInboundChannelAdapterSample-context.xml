@@ -27,7 +27,7 @@
 	
 	<bean id="feedCollector" class="org.springframework.integration.samples.feed.FeedCollector">
 		<constructor-arg>
-			<value>200</value>
+			<value>20</value>
 		</constructor-arg>
 		<constructor-arg>
 			<ref bean="feedComparator"/>

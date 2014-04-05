@@ -15,6 +15,8 @@
  */
 package org.springframework.integration.samples.feed;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.List;
 
 import org.junit.Test;
@@ -34,9 +36,10 @@ public class FeedInboundChannelAdapterSample {
 		ApplicationContext ac = 
 			new ClassPathXmlApplicationContext("META-INF/spring/integration/FeedInboundChannelAdapterSample-context.xml");
 		FeedCollector feedCollector = ac.getBean("feedCollector", FeedCollector.class);
-		Thread.sleep(10000);
-		List<SyndEntry> result =  feedCollector.get(0, 500);
+		Thread.sleep(30000);
 		
+		List<SyndEntry> result =  feedCollector.get(0, 5000);
+		assertEquals(20, result.size());
 		for(SyndEntry entry : result){
 			System.out.println(entry.getPublishedDate() + " - " + entry.getTitle() + ":"+entry.getLink());
 		}

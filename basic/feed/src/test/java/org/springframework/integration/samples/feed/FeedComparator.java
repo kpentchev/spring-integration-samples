@@ -8,7 +8,7 @@ public class FeedComparator implements Comparator<SyndEntry>{
 
 	@Override
 	public int compare(SyndEntry o1, SyndEntry o2) {
-		return o1.getPublishedDate().compareTo(o2.getPublishedDate());
+		return o2.getPublishedDate().compareTo(o1.getPublishedDate());
 	}
 
 }
